@@ -13,7 +13,7 @@ import { VideoModule } from './video/video.module';
 import { ClipComponent } from './clip/clip.component';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
-
+import { AngularFireStorageModule } from '@angular/fire/compat/storage';
 @NgModule({
   declarations: [
     AppComponent,
@@ -31,6 +31,7 @@ import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
     AngularFirestoreModule,
     VideoModule,
     AppRoutingModule,
+    AngularFireStorageModule,
   ],
   providers: [],
   bootstrap: [AppComponent],
