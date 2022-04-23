@@ -14,7 +14,7 @@ export class LoginComponent implements OnInit {
 
   inSubmision = false;
   showAlert = false;
-  alertMsg = 'Please wait! Your account is being created.';
+  alertMsg = 'Please wait! We are loggin you in';
   alertColor = 'blue';
 
   constructor(private auth: AngularFireAuth) {}
@@ -23,9 +23,10 @@ export class LoginComponent implements OnInit {
 
   async login() {
     this.showAlert = true;
-    this.alertMsg = 'Please wait! Your account is being logged in.';
+    this.alertMsg = 'Please wait! We are loggin you in';
     this.alertColor = 'blue';
     this.inSubmision = true;
+
     try {
       await this.auth.signInWithEmailAndPassword(
         this.credentials.email,
@@ -40,7 +41,7 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    this.alertMsg = 'Success! Your account has been Logged in.';
+    this.alertMsg = 'Success! You are now logged in.';
     this.alertColor = 'green';
   }
 }
