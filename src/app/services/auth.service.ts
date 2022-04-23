@@ -7,6 +7,7 @@ import {
 import { Observable } from 'rxjs';
 import IUser from '../models/user.model';
 import { map, delay } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -16,7 +17,11 @@ export class AuthService {
   public isAuthenticated$: Observable<boolean>;
   public isAuthenticatedWithDelay$: Observable<boolean>;
 
-  constructor(private auth: AngularFireAuth, private db: AngularFirestore) {
+  constructor(
+    private auth: AngularFireAuth,
+    private db: AngularFirestore,
+    private router: Router
+  ) {
     this.usersCollection = this.db.collection('users');
     this.isAuthenticated$ = this.auth.user.pipe(map((user) => !!user));
 
@@ -47,5 +52,11 @@ export class AuthService {
     await userCred.user.updateProfile({
       displayName: name,
     });
+  }
+
+  async logout($event: Event) {
+    $event.preventDefault();
+    await this.auth.signOut();
+    await this.router.navigateByUrl('/');
   }
 }
