@@ -8,7 +8,6 @@ import { AuthService } from '../../services/auth.service';
   styleUrls: ['./register.component.css'],
 })
 export class RegisterComponent {
-  inSubmision = false;
   constructor(private auth: AuthService) {}
 
   name = new FormControl('', [Validators.required, Validators.minLength(3)]);
@@ -29,6 +28,7 @@ export class RegisterComponent {
     Validators.maxLength(13),
   ]);
 
+  inSubmision = false;
   showAlert = false;
   alertMsg = 'Please wait! Your account is being created.';
   alertColor = 'blue';
