@@ -20,12 +20,19 @@
               routerLink="/manage"
               routerLinkActive="text-indigo-400"
               [routerLinkActiveOptions]="{ exact: true }"
+              [queryParams]="{ sort: '1' }"
             >
-              >Manage</a
+              Manage</a
             >
           </li>
           <li>
-            <a class="px-2">Upload</a>
+            <a
+              class="px-2"
+              routerLink="/upload"
+              routerLinkActive="text-indigo-400"
+              [routerLinkActiveOptions]="{ exact: true }"
+              >Upload</a
+            >
           </li>
           <li>
             <a class="px-2" (click)="auth.logout($event)">logout</a>

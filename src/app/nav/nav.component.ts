@@ -10,11 +10,7 @@ import { ModalService } from '../services/modal.service';
   styleUrls: ['./nav.component.css'],
 })
 export class NavComponent implements OnInit {
-  constructor(
-    public modal: ModalService,
-    public auth: AuthService,
-
-  ) {}
+  constructor(public modal: ModalService, public auth: AuthService) {}
 
   ngOnInit(): void {}
 
@@ -22,6 +18,4 @@ export class NavComponent implements OnInit {
     $event.preventDefault();
     this.modal.toggleModal('auth');
   }
-
-
 }

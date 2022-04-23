@@ -1,14 +1,17 @@
 <!-- Top Bar -->
 <section class="container mx-auto my-8 bg-secondary p-6">
   <div class="rounded relative flex justify-between">
-    <a href="#" class="bg-indigo-400 text-white py-4 px-10 text-xl"
+    <a routerLink="/upload" class="bg-indigo-400 text-white py-4 px-10 text-xl"
       >Upload Videos</a
     >
 
     <!-- Sort Videos -->
-    <select class="text-black px-8 text-xl outline-none appearance-none">
-      <option value="1">Recent Uploads</option>
-      <option value="2">Oldest Uploads</option>
+    <select
+      (change)="sort($event)"
+      class="text-black px-8 text-xl outline-none appearance-none"
+    >
+      <option value="1" [selected]="videoOrder === '1'">Recent Uploads</option>
+      <option value="2" [selected]="videoOrder === '2'">Oldest Uploads</option>
     </select>
   </div>
 </section>
