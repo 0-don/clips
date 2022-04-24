@@ -96,7 +96,7 @@ export class UploadComponent implements OnInit, OnDestroy {
       .subscribe({
         next: async (url) => {
           const clip = {
-            uuid: this.user?.uid as string,
+            uid: this.user?.uid as string,
             displayName: this.user?.displayName as string,
             title: this.title.value,
             fileName: `${clipFileName}.mp4`,
@@ -112,7 +112,7 @@ export class UploadComponent implements OnInit, OnDestroy {
           this.showPercentage = false;
 
           setTimeout(() => {
-            this.router.navigate(['/clips', clipDocRef.id]);
+            this.router.navigate(['/clip', clipDocRef.id]);
           }, 1000);
         },
         error: (error) => {
