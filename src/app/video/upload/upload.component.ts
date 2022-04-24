@@ -1,15 +1,18 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
 import {
   AngularFireStorage,
   AngularFireUploadTask,
 } from '@angular/fire/compat/storage';
-import { v4 as uuid } from 'uuid';
-import { last, switchMap } from 'rxjs';
-import { AngularFireAuth } from '@angular/fire/compat/auth';
-import firebase from 'firebase/compat/app';
-import { ClipService } from 'src/app/services/clip.service';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import firebase from 'firebase/compat/app';
+import { combineLatest, forkJoin, switchMap } from 'rxjs';
+import IClip from 'src/app/models/clip.model';
+import { ClipService } from 'src/app/services/clip.service';
+import { FfmpegService } from 'src/app/services/ffmpeg.service';
+import { v4 as uuid } from 'uuid';
+
 @Component({
   selector: 'app-upload',
   templateUrl: './upload.component.html',
@@ -30,6 +33,10 @@ export class UploadComponent implements OnInit, OnDestroy {
   user: firebase.User | null = null;
   task?: AngularFireUploadTask;
 
+  screenshots: string[] = [];
+  selectedScreenshot = '';
+  screenshotTask?: AngularFireUploadTask;
+
   title = new FormControl('', [Validators.required, Validators.minLength(3)]);
   uploadForm = new FormGroup({
     title: this.title,
@@ -39,11 +46,11 @@ export class UploadComponent implements OnInit, OnDestroy {
     private storage: AngularFireStorage,
     private auth: AngularFireAuth,
     private clipsService: ClipService,
-    private router: Router
+    private router: Router,
+    public ffmpegService: FfmpegService
   ) {
-    this.auth.user.subscribe((user) => {
-      this.user = user;
-    });
+    this.auth.user.subscribe((user) => (this.user = user));
+    this.ffmpegService.init();
   }
 
   ngOnInit(): void {}
@@ -52,7 +59,11 @@ export class UploadComponent implements OnInit, OnDestroy {
     this.task?.cancel();
   }
 
-  storeFile($event: Event) {
+  async storeFile($event: Event) {
+    if (this.ffmpegService.isRunning) {
+      return;
+    }
+
     this.isDragover = false;
 
     this.file =
@@ -62,7 +73,12 @@ export class UploadComponent implements OnInit, OnDestroy {
 
     if (!this.file || this.file.type !== 'video/mp4') {
       this.file = null;
+      return;
     }
+
+    this.screenshots = await this.ffmpegService.getScreenshots(this.file);
+
+    this.selectedScreenshot = this.screenshots[0];
 
     this.title.setValue(this.file?.name.replace(/\.[^/.]+$/, ''));
     this.nextStep = true;
@@ -80,27 +96,49 @@ export class UploadComponent implements OnInit, OnDestroy {
     const clipFileName = uuid();
     const clipPath = `clips/${clipFileName}.mp4`;
 
+    const scrrenshotBlob = await this.ffmpegService.blobFromURL(
+      this.selectedScreenshot
+    );
+    const screenshotPath = `screenshots/${clipFileName}.png`;
+
     this.task = this.storage.upload(clipPath, this.file);
     const clipRef = this.storage.ref(clipPath);
 
-    this.task.percentageChanges().subscribe((percentage) => {
-      this.percentage = (percentage as number) / 100;
+    this.screenshotTask = this.storage.upload(screenshotPath, scrrenshotBlob);
+    const screenshotRef = this.storage.ref(screenshotPath);
+
+    combineLatest([
+      this.task.percentageChanges(),
+      this.screenshotTask.percentageChanges(),
+    ]).subscribe((progress) => {
+      const [clipProgress, screenshotProgress] = progress;
+      if (!clipProgress || !screenshotProgress) {
+        return;
+      }
+      const total = clipProgress + screenshotProgress;
+      this.percentage = (total as number) / 200;
     });
 
-    this.task
-      .snapshotChanges()
+    forkJoin([
+      this.task.snapshotChanges(),
+      this.screenshotTask.snapshotChanges(),
+    ])
       .pipe(
-        last(),
-        switchMap(() => clipRef.getDownloadURL())
+        switchMap(() =>
+          forkJoin([clipRef.getDownloadURL(), screenshotRef.getDownloadURL()])
+        )
       )
       .subscribe({
-        next: async (url) => {
-          const clip = {
+        next: async (urls) => {
+          const [clipUrl, screenshotUrl] = urls;
+          const clip: IClip = {
             uid: this.user?.uid as string,
             displayName: this.user?.displayName as string,
             title: this.title.value,
             fileName: `${clipFileName}.mp4`,
-            url,
+            url: clipUrl,
+            screenshotURL: screenshotUrl,
+            screenshotFileName: `${clipFileName}.png`,
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           };
 
